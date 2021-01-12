@@ -16,6 +16,8 @@ const (
 // command line arguments
 var (
 	flagVersion bool = false
+	flagDiff    bool = false
+	flagSplit   bool = false
 )
 
 func version() {
@@ -80,13 +82,14 @@ func writeLines(lines []string, path string) {
 }
 
 func cleanup(f1Lines []string, f2Lines []string) []string {
-
+	// check if line from f2 already exist in f1
 	var cleannedFile []string
 	for _, line := range f2Lines {
 		if !stringInSlice(line, f1Lines) {
 			cleannedFile = append(cleannedFile, line)
 		}
 	}
+	// return f2 without f1 line
 	return cleannedFile
 }
 
@@ -100,9 +103,34 @@ func stringInSlice(a string, list []string) bool {
 	return false
 }
 
+// diff function
+func diff(fileMatch string, fileToClean string) {
+	// Read the files
+	fm := readFile(fileMatch)
+	ftc := readFile(fileToClean)
+
+	// Remove fileToClean line's already contained in fileMatch and return cleaned result
+	cleannedFile := cleanup(fm, ftc)
+
+	// write the cleaned result
+	writeLines(cleannedFile, fmt.Sprintf("%s.%s", fileToClean, "cleaned"))
+}
+
+// split function
+func split(fileToSplit string, nPart int) {
+	// Read the files
+	f := readFile(fileToSplit)
+	_ = f
+
+	// write x part of file
+	//
+}
+
 func main() {
 	flag.Usage = usage
 	flag.BoolVar(&flagVersion, "v", flagVersion, "Print version information")
+	flag.BoolVar(&flagDiff, "d", flagDiff, "diff between <fileMatch> <fileToClean>")
+	flag.BoolVar(&flagSplit, "s", flagSplit, "split file in X part")
 	flag.Parse()
 
 	if flagVersion {
@@ -117,23 +145,19 @@ func main() {
 		os.Exit(0)
 	}
 
-	if len(args) < 2 {
-		log.Printf("Missing files")
-		os.Exit(1)
+	if flagDiff {
+
+		if len(args) < 2 {
+			log.Printf("Missing files")
+			os.Exit(1)
+		}
+
+		if len(args) > 2 {
+			log.Printf("Too many files")
+			os.Exit(1)
+		}
+
+		diff(args[0], args[1])
 	}
 
-	if len(args) > 2 {
-		log.Printf("Too many files")
-		os.Exit(1)
-	}
-
-	// Read the files
-	fileMatch := readFile(args[0])
-	fileToClean := readFile(args[1])
-
-	// Remove fileToClean line's already contained in fileMatch and return cleaned result
-	cleannedFile := cleanup(fileMatch, fileToClean)
-
-	// write the cleaned result
-	writeLines(cleannedFile, fmt.Sprintf("%s.%s", args[1], "cleaned"))
 }
