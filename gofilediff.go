@@ -5,19 +5,13 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math"
 	"os"
 )
 
 const (
 	// Version number
 	VERSION = "0.1"
-)
-
-// command line arguments
-var (
-	flagVersion bool = false
-	flagDiff    bool = false
-	flagSplit   bool = false
 )
 
 func version() {
@@ -120,17 +114,39 @@ func diff(fileMatch string, fileToClean string) {
 func split(fileToSplit string, nPart int) {
 	// Read the files
 	f := readFile(fileToSplit)
-	_ = f
+	fmt.Printf("%s splited in %d parts\n\n", fileToSplit, nPart)
 
-	// write x part of file
-	//
+	// limit= number of element by part
+	limit := int(math.Ceil(float64(len(f)) / float64(nPart)))
+	suffixName := 1
+	for i := 0; i < len(f); i += limit {
+		batch := f[i:min(i+limit, len(f))]
+		writeLines(batch, fmt.Sprintf("%s.split%d", fileToSplit, suffixName))
+		suffixName++
+	}
+}
+
+// used to compare int and not float
+func min(a, b int) int {
+	if a <= b {
+		return a
+	}
+	return b
 }
 
 func main() {
+	var (
+		flagVersion  bool = false
+		flagDiff     bool = false
+		flagSplit    bool = false
+		flagSplitNum int  = 1
+	)
+
 	flag.Usage = usage
 	flag.BoolVar(&flagVersion, "v", flagVersion, "Print version information")
 	flag.BoolVar(&flagDiff, "d", flagDiff, "diff between <fileMatch> <fileToClean>")
 	flag.BoolVar(&flagSplit, "s", flagSplit, "split file in X part")
+	flag.IntVar(&flagSplitNum, "num", flagSplitNum, "Split: Number of split for the file")
 	flag.Parse()
 
 	if flagVersion {
@@ -158,6 +174,14 @@ func main() {
 		}
 
 		diff(args[0], args[1])
+
+	} else if flagSplit {
+		if len(args) > 1 {
+			log.Printf("Too many files")
+			os.Exit(1)
+		}
+
+		split(args[0], flagSplitNum)
 	}
 
 }
