@@ -11,7 +11,7 @@ go build -o gofilediff gofilediff.go
 
 ## Example
 
-Create a example2.clened file container example2 lines without lines existing in example1.
+Create a example2.cleaned file container example2 lines without lines existing in example1.
 
 ```bash
 gofilediff -d example1 example2
